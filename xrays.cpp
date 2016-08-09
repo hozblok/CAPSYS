@@ -33,6 +33,7 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
 //    qDebug() << "DEBUG: cap_id" << cap_id[0] << "source_id" << source_id[0];
 
     //+ get cap from bd
+    //+ получаем информацию о капилляре
     QSqlQuery query_cap(dbase);
     query_cap.prepare("SELECT id, surface, dimension_m, accuracy, accuracy_physics, lower_edge, upper_edge FROM caps WHERE id = ?");
     //??
@@ -64,6 +65,7 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
     //-
 
     //+ get source from bd
+    //+ получаем информацию об источнике
     QSqlQuery query_source(dbase);
     query_source.prepare("SELECT id, surface, x_lower, x_upper, y_lower, y_upper, z_lower, z_upper, phi_lower, phi_upper, theta_lower, theta_upper FROM sources WHERE id = ?");
     query_source.addBindValue(source_id[0]);
@@ -128,6 +130,8 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
 
     //+ If the beam is not captured in the capillary - we are looking for the other beam if recording_not_captured == false
     // else save to base and the work is done.
+    //+ Если пучок не захватился, мы ищем другой пучок при условии, что recording_not_captured == false
+    // если recording_not_captured == true мы записываем как есть
     bool flag_captured = false;
     for (int i = 0; !flag_captured; ++i)
     {
@@ -167,6 +171,7 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
 
         if (!flag_captured && recording_not_captured)
         {
+            // записываем как есть!
             //+++++++++++++++RAY+++++++++++++++++++++++++
             QSqlQuery ray_query(dbase);
             ray_query.prepare("INSERT INTO rays (sources_id, caps_id, phi, theta, x_source, y_source, z_source, captured, reached_screen)"
@@ -192,7 +197,7 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
             point_query.bindValue(":x", getQString(point_source[0]));
             point_query.bindValue(":y", getQString(point_source[1]));
             point_query.bindValue(":z", getQString(point_source[2]));
-            point_query.bindValue(":angle", "0.");
+            point_query.bindValue(":angle", ""); //"0."
             point_query.bindValue(":on_source", 1);
             point_query.bindValue(":on_screen", 0);
             point_query.exec();
@@ -220,6 +225,7 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
     }
     //-
 
+    // луч захватился, записываем точку на источнике
     // save source point to DB:
     //+++++++++++++++RAY+++++++++++++++++++++++
     QSqlQuery ray_query(dbase);
@@ -246,7 +252,7 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
     point_query.bindValue(":x", getQString(point_source[0]));
     point_query.bindValue(":y", getQString(point_source[1]));
     point_query.bindValue(":z", getQString(point_source[2]));
-    point_query.bindValue(":angle", "0.");
+    point_query.bindValue(":angle", "");//"0."
     point_query.bindValue(":on_source", 1);
     point_query.bindValue(":on_screen", 0);
     point_query.exec();
@@ -436,20 +442,6 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
             break;
         }
 //        qDebug() << "011" << surface_of_cap_modified << surface_of_cap;
-        //+++++++++++++++++++POINT++++++++++++++++++++++++
-        point_query.clear();
-        point_query.prepare("INSERT INTO points (rays_id, number_in_ray, x, y, z, angle, on_source, on_screen)"
-                                "VALUES (:rays_id, :number_in_ray, :x, :y, :z, :angle, :on_source, :on_screen);");
-        point_query.bindValue(":rays_id", ray_id);
-        point_query.bindValue(":number_in_ray", number_point);
-        point_query.bindValue(":x", getQString(tmp_result_point[0]));
-        point_query.bindValue(":y", getQString(tmp_result_point[1]));
-        point_query.bindValue(":z", getQString(tmp_result_point[2]));
-        point_query.bindValue(":angle", getQString(angle));
-        point_query.bindValue(":on_source", 0);
-        point_query.bindValue(":on_screen", 0);
-        point_query.exec();
-        //-------------------------------------------------
 //        qDebug() << "012";
         //+ разворачиваем направляющий вектор
         for (int j = 0; j < sizeColumns; ++j)
@@ -474,6 +466,20 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
         // calculate glancing angle
         QByteArray error;
         angle = _asin(tmp_projection / tmp, ZERO, error); //angle = asin(tmp_projection / tmp);
+        //+++++++++++++++++POINT1++++++++++++++++++++++++++
+        point_query.clear();
+        point_query.prepare("INSERT INTO points (rays_id, number_in_ray, x, y, z, angle, on_source, on_screen)"
+                                "VALUES (:rays_id, :number_in_ray, :x, :y, :z, :angle, :on_source, :on_screen);");
+        point_query.bindValue(":rays_id", ray_id);
+        point_query.bindValue(":number_in_ray", number_point);
+        point_query.bindValue(":x", getQString(tmp_result_point[0]));
+        point_query.bindValue(":y", getQString(tmp_result_point[1]));
+        point_query.bindValue(":z", getQString(tmp_result_point[2]));
+        point_query.bindValue(":angle", getQString(angle));
+        point_query.bindValue(":on_source", 0);
+        point_query.bindValue(":on_screen", 0);
+        point_query.exec();
+        //-------------------------------------------------
 //        qDebug() << "014";
         directing_vector[0] = directing_vector[0] - 2.0 * abs(tmp_projection) * tmp_normal_to_surface[0]; //новый направляющий вектор прямой)
         directing_vector[1] = directing_vector[1] - 2.0 * abs(tmp_projection) * tmp_normal_to_surface[1]; //новые = для новой прямой
@@ -524,7 +530,7 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
         point_query.bindValue(":x", getQString(tmp_result_point[0]));
         point_query.bindValue(":y", getQString(tmp_result_point[1]));
         point_query.bindValue(":z", getQString(tmp_result_point[2]));
-        point_query.bindValue(":angle", getQString(angle));
+        point_query.bindValue(":angle", "");//getQString(angle));
         point_query.bindValue(":on_source", 0);
         point_query.bindValue(":on_screen", 1);
         point_query.exec();
