@@ -1,8 +1,7 @@
 #include "linalg.h"
 
-LinAlg::LinAlg(QObject *parent, bool t_excessive_checking) :
-    QObject(parent)
-    , excessive_checking(t_excessive_checking)
+LinAlg::LinAlg(bool t_excessive_checking) :
+    excessive_checking(t_excessive_checking)
 {
 }
 
@@ -17,19 +16,19 @@ int LinAlg::permutation_swap(VEC_I &permutation, const int &i, const int &j) con
         const int size = permutation.size();
         if (size != sizeRows)
         {
-            output("ERROR: permutation_swap: size of permutation is wrong!");
+            print("ERROR: permutation_swap: size of permutation is wrong!");
             return -1;
         }
     }
 
     if (i >= sizeRows)
     {
-        output("ERROR: permutation_swap: first index is out of range!");
+        print("ERROR: permutation_swap: first index is out of range!");
         return -1;
     }
     else if (j >= sizeRows)
     {
-        output("ERROR: permutation_swap: second index is out of range!");
+        print("ERROR: permutation_swap: second index is out of range!");
         return -1;
     }
     else if (i != j)
@@ -48,19 +47,19 @@ int LinAlg::matrix_swap_rows(VEC_VEC_R &matrix, const int &i, const int &j) cons
         const int size2 = matrix[0].size();
         if (size1 != sizeRows || size2 != sizeColumns)
         {
-            output("ERROR: matrix_swap_rows: size of martix is wrong!");
+            print("ERROR: matrix_swap_rows: size of martix is wrong!");
             return -1;
         }
     }
 
     if (i >= sizeRows)
     {
-        output("ERROR: matrix_swap_rows: first row index is out of range");
+        print("ERROR: matrix_swap_rows: first row index is out of range");
         return -1;
     }
     else if (j >= sizeRows)
     {
-        output("ERROR: matrix_swap_rows: second row index is out of range");
+        print("ERROR: matrix_swap_rows: second row index is out of range");
         return -1;
     }
     else if (i != j)
@@ -84,7 +83,7 @@ int LinAlg::permutation_init(VEC_I & permutation) const
         const int size = permutation.size();
         if (size != sizeRows)
         {
-            output("ERROR: permutation_init: size of p is wrong!");
+            print("ERROR: permutation_init: size of p is wrong!");
             return -1;
         }
     }
@@ -98,22 +97,21 @@ int LinAlg::permutation_init(VEC_I & permutation) const
     return 0;
 }
 
-int LinAlg::tests_LU_decomposition(VEC_VEC_R &matrix, VEC_I &permutation, int &size) const
+int LinAlg::tests_LU_decomposition(VEC_VEC_R &matrix, VEC_I &permutation, size_t &size) const
 {
-    size = matrix.size();
     if (size != sizeRows)
     {
-        output("ERROR: LU_decomposition: LU decomposition requires three-dimensional space");
+        print("ERROR: LU_decomposition: LU decomposition requires three-dimensional space");
         return -1;
     }
     if (size != matrix[0].size())
     {
-        output("ERROR: LU_decomposition: LU decomposition requires square matrix");
+        print("ERROR: LU_decomposition: LU decomposition requires square matrix");
         return -1;
     }
-    else if (permutation.size() != size)
+    else if (size != permutation.size())
     {
-        output("ERROR: LU_decomposition: permutation length must match matrix size");
+        print("ERROR: LU_decomposition: permutation length must match matrix size");
         return -1;
     }
     return 0;
@@ -121,7 +119,7 @@ int LinAlg::tests_LU_decomposition(VEC_VEC_R &matrix, VEC_I &permutation, int &s
 
 int LinAlg::LU_decomposition(VEC_VEC_R &matrix, VEC_I &permutation, int *signum)
 {
-    int size = 0;
+    size_t size = matrix.size();
     if (tests_LU_decomposition(matrix, permutation, size) != 0)
     {
         return -1;
@@ -132,7 +130,7 @@ int LinAlg::LU_decomposition(VEC_VEC_R &matrix, VEC_I &permutation, int *signum)
         return -1;
     }
 
-    for (int j = 0; j < size - 1; j++)
+    for (size_t j = 0; j + 1 < size; j++)
     {
         /* Find maximum in the j-th column */
 
@@ -142,9 +140,9 @@ int LinAlg::LU_decomposition(VEC_VEC_R &matrix, VEC_I &permutation, int *signum)
 #else
         REAL max = fabs(A[j][j]);
 #endif
-        int i_pivot = j;
+        size_t i_pivot = j;
 
-        for (int i = j + 1; i < size; i++)
+        for (size_t i = j + 1; i < size; i++)
         {
 #if USE_MPF_CLASS
             REAL tmp_aij("0.0", NUMBITS);
@@ -177,10 +175,10 @@ int LinAlg::LU_decomposition(VEC_VEC_R &matrix, VEC_I &permutation, int *signum)
 #endif
         if (tmp_ajj != 0.0)
         {
-            for (int i = j + 1; i < size; i++)
+            for (size_t i = j + 1; i < size; i++)
             {
                 matrix[i][j] = matrix[i][j] / tmp_ajj;
-                for (int k = j + 1; k < size; k++)
+                for (size_t k = j + 1; k < size; k++)
                 {
                     matrix[i][k] = matrix[i][k] - matrix[i][j] * matrix[j][k];
                 }
@@ -299,7 +297,7 @@ int LinAlg::solve_forward_back_substitution(bool upper, bool nonunit, VEC_VEC_R 
     }
     else
     {
-        output("ERROR: solve_forward_back_substitution: unrecognized operation!");
+        print("ERROR: solve_forward_back_substitution: unrecognized operation!");
         return -1;
     }
 
@@ -308,9 +306,9 @@ int LinAlg::solve_forward_back_substitution(bool upper, bool nonunit, VEC_VEC_R 
 
 int LinAlg::permute_vector(VEC_I &p, VEC_R &x)
 {
-    for (int i = 0; i < x.size(); ++i)
+    for (size_t i = 0; i < x.size(); ++i)
     {
-        int k = p[i];
+        size_t k = p[i];
         while (k > i)
         {
             k = p[k];
@@ -321,7 +319,7 @@ int LinAlg::permute_vector(VEC_I &p, VEC_R &x)
         }
 
         /* Now have k == i, i.e the least in its cycle */
-        int pk = p[k];
+        size_t pk = p[k];
         if (pk == i)
         {
             continue;
@@ -352,27 +350,27 @@ int LinAlg::LU_solve_for_x(VEC_VEC_R &LU_matrix, VEC_I &permutation, VEC_R &x)
 {
     if (LU_matrix.size() != LU_matrix[0].size())
     {
-        output("ERROR: LU matrix must be square");
+        print("ERROR: LU matrix must be square");
         return -1;
     }
     else if (LU_matrix.size() != permutation.size())
     {
-        output("ERROR: permutation length must match matrix size");
+        print("ERROR: permutation length must match matrix size");
         return -1;
     }
     else if (LU_matrix.size() != x.size())
     {
-        output("ERROR: matrix size must match solution/rhs size");
+        print("ERROR: matrix size must match solution/rhs size");
         return -1;
     }
     else if (x.size() != permutation.size())
     {
-        output("ERROR: vector and permutation must be the same length");
+        print("ERROR: vector and permutation must be the same length");
         return -1;
     }
     else if (singular(LU_matrix))
     {
-        output("ERROR: matrix is singular");
+        print("ERROR: matrix is singular");
         return -1;
     }
     else
@@ -398,33 +396,33 @@ int LinAlg::LU_solve(VEC_VEC_R &LU_matrix, VEC_I &permutation, VEC_R &b, VEC_R &
 {
     if (LU_matrix.size() != LU_matrix[0].size())
     {
-        output("ERROR: LU_solve: LU matrix must be square");
+        print("ERROR: LU_solve: LU matrix must be square");
         return -1;
     }
     else if (LU_matrix.size() != permutation.size())
     {
-        output("ERROR: LU_solve: permutation length must match matrix size");
+        print("ERROR: LU_solve: permutation length must match matrix size");
         return -1;
     }
     else if (LU_matrix.size() != b.size())
     {
-        output("ERROR: LU_solve: matrix size must match b size");
+        print("ERROR: LU_solve: matrix size must match b size");
         return -1;
     }
     else if (LU_matrix[0].size() != x.size())
     {
-        output("ERROR: LU_solve: matrix size must match solution size");
+        print("ERROR: LU_solve: matrix size must match solution size");
         return -1;
     }
     else if (singular(LU_matrix))
     {
-        output("ERROR: LU_solve: matrix is singular");
+        print("ERROR: LU_solve: matrix is singular");
         return -1;
     }
     else
     {
         /* Copy x <- b */
-        for (int i = 0; i < b.size(); ++i) {
+        for (size_t i = 0; i < b.size(); ++i) {
             x[i] = b[i];
         }
         //        gsl_vector_memcpy (x, b);
@@ -489,13 +487,13 @@ int LinAlg::NewtonMetodForSurfaceAndStraightLine(const QByteArray &initial_surfa
     {
         if (i > maximum_number_of_attempts)
         {
-            output("ERROR: LU_Solve() in NewtonMetod: Limit is exceeded!");
+            print("ERROR: LU_Solve() in NewtonMetod: Limit is exceeded!");
             return -1;
         }
 
         for (int j = 0; j < sizeColumns; ++j)
         {
-            jacobi_matrix[0][j]= eval_modified_surface.getValueDerivative(namesOfVariables[j], result_point[0], result_point[1], result_point[2]);
+            jacobi_matrix[0][j]= eval_modified_surface.getValueDerivative(namesOfVar[j], result_point[0], result_point[1], result_point[2]);
         }
         jacobi_matrix[1][0]= directing_vec[1];
         jacobi_matrix[1][1]= ZERO - directing_vec[0];
@@ -530,12 +528,12 @@ int LinAlg::NewtonMetodForSurfaceAndStraightLine(const QByteArray &initial_surfa
         int tsignum = 0;
         if (LU_decomposition(jacobi_matrix, vector_permutation, &tsignum) < 0)
         {
-            output("ERROR: LU_decomposition() in NewtonMetod: LU_decomposition was broken");
+            print("ERROR: LU_decomposition() in NewtonMetod: LU_decomposition was broken");
             return -1;
         }
         if (LU_solve(jacobi_matrix, vector_permutation, b_vector_right_part, x_vector_solution) < 0)
         {
-            output("ERROR: LU_Solve() in NewtonMetod: LU_Solve was broken");
+            print("ERROR: LU_Solve() in NewtonMetod: LU_Solve was broken");
             return -1;
         }
 
@@ -548,7 +546,7 @@ int LinAlg::NewtonMetodForSurfaceAndStraightLine(const QByteArray &initial_surfa
         }
         else
         {
-            output("ERROR: LU_Solve() in NewtonMetod: wrong format of resultPoint");
+            print("ERROR: LU_Solve() in NewtonMetod: wrong format of resultPoint");
             return -1;
         }
 

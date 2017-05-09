@@ -53,7 +53,7 @@ REAL _div(REAL a, REAL b, QByteArray &error)
     if (b == ZERO)
     {
         error = QByteArray("ERROR: division by zero error!");
-        output(error.constData());
+        print(error.constData());
         return ZERO;
     }
     a = a / b;
@@ -70,8 +70,8 @@ REAL _pow(REAL a, REAL b, QByteArray &)
     mpfr_init2(result, NUMBITS);
 //    mpfr_init_set_f(base, a.get_mpf_t(), MPFR_RNDN);
 //    mpfr_init_set_f(degr, b.get_mpf_t(), MPFR_RNDN);
-    mpfr_set_str(base, getQString(a).toLocal8Bit().constData(), 10, MPFR_RNDN);
-    mpfr_set_str(degr, getQString(b).toLocal8Bit().constData(), 10, MPFR_RNDN);
+    mpfr_set_str(base, getString(a).data(), 10, MPFR_RNDN);
+    mpfr_set_str(degr, getString(b).data(), 10, MPFR_RNDN);
     mpfr_pow(result, base, degr, MPFR_RNDN);
     mpfr_get_f(a.get_mpf_t(), result, MPFR_RNDN);
     mpfr_clear(base);
@@ -85,7 +85,7 @@ REAL _mod(REAL a, REAL b, QByteArray &error)
     if (b == ZERO)
     {
         error = QByteArray("ERROR: division by zero error!");
-        output(error.constData());
+        print(error.constData());
         return ZERO;
     }
     mpfr_t base;
@@ -96,8 +96,8 @@ REAL _mod(REAL a, REAL b, QByteArray &error)
     mpfr_init2(result, NUMBITS);
 //    mpfr_init_set_f(base, a.get_mpf_t(), MPFR_RNDN);
 //    mpfr_init_set_f(degr, b.get_mpf_t(), MPFR_RNDN);
-    mpfr_set_str(base, getQString(a).toLocal8Bit().constData(), 10, MPFR_RNDN);
-    mpfr_set_str(degr, getQString(b).toLocal8Bit().constData(), 10, MPFR_RNDN);
+    mpfr_set_str(base, getString(a).data(), 10, MPFR_RNDN);
+    mpfr_set_str(degr, getString(b).data(), 10, MPFR_RNDN);
     mpfr_fmod(result, degr, base, MPFR_RNDN);
     mpfr_get_f(a.get_mpf_t(), result, MPFR_RNDN);
     mpfr_clear(base);
@@ -111,13 +111,13 @@ REAL _ln(REAL a, REAL, QByteArray &error)
     if (a <= ZERO)
     {
         error = QByteArray("ERROR: ln(a <= 0!!!)!");
-        output(error.constData());
+        print(error.constData());
         return ZERO;
     }
     mpfr_t tmp1; mpfr_init2(tmp1, NUMBITS);
     mpfr_t result; mpfr_init2(result, NUMBITS);
 //    mpfr_init_set_f(tmp1, a.get_mpf_t(), MPFR_RNDN);
-    mpfr_set_str(tmp1, getQString(a).toLocal8Bit().constData(), 10, MPFR_RNDN);
+    mpfr_set_str(tmp1, getString(a).data(), 10, MPFR_RNDN);
     mpfr_log(result, tmp1, MPFR_RNDN);
     mpfr_get_f(a.get_mpf_t(), result, MPFR_RNDN);
     mpfr_clear(tmp1);
@@ -150,7 +150,7 @@ REAL _asin(REAL a, REAL, QByteArray &)
     try
     {
 //        mpfr_init_set_f(tmp1, a.get_mpf_t(), MPFR_RNDN);
-        mpfr_set_str(tmp1, getQString(a).toLocal8Bit().constData(), 10, MPFR_RNDN);
+        mpfr_set_str(tmp1, getString(a).data(), 10, MPFR_RNDN);
         mpfr_asin(result, tmp1, MPFR_RNDN);
         mpfr_get_f(a.get_mpf_t(), result, MPFR_RNDN);
     }
@@ -172,7 +172,7 @@ REAL _acos(REAL a, REAL, QByteArray &)
     try
     {
 //        mpfr_init_set_f(tmp1, a.get_mpf_t(), MPFR_RNDN);
-        mpfr_set_str(tmp1, getQString(a).toLocal8Bit().constData(), 10, MPFR_RNDN);
+        mpfr_set_str(tmp1, getString(a).data(), 10, MPFR_RNDN);
         mpfr_acos(result, tmp1, MPFR_RNDN);
         mpfr_get_f(a.get_mpf_t(), result, MPFR_RNDN);
     }
@@ -194,7 +194,7 @@ REAL _atan(REAL a, REAL, QByteArray &)
     try
     {
 //        mpfr_init_set_f(tmp1, a.get_mpf_t(), MPFR_RNDN);
-        mpfr_set_str(tmp1, getQString(a).toLocal8Bit().constData(), 10, MPFR_RNDN);
+        mpfr_set_str(tmp1, getString(a).data(), 10, MPFR_RNDN);
         mpfr_atan(result, tmp1, MPFR_RNDN);
         mpfr_get_f(a.get_mpf_t(), result, MPFR_RNDN);
     }
@@ -216,7 +216,7 @@ REAL _exp(REAL a, REAL, QByteArray &)
     try
     {
 //        mpfr_init_set_f(tmp1, a.get_mpf_t(), MPFR_RNDN);
-        mpfr_set_str(tmp1, getQString(a).toLocal8Bit().constData(), 10, MPFR_RNDN);
+        mpfr_set_str(tmp1, getString(a).data(), 10, MPFR_RNDN);
         mpfr_exp(result, tmp1, MPFR_RNDN);
         mpfr_get_f(a.get_mpf_t(), result, MPFR_RNDN);
     }
@@ -240,7 +240,7 @@ REAL _sin(REAL a, REAL, QByteArray &)
     {
 //        mpfr_init_set_f(tmp1, a.get_mpf_t(), MPFR_RNDN);
 
-        mpfr_set_str(tmp1, getQString(a).toLocal8Bit().constData(), 10, MPFR_RNDN);
+        mpfr_set_str(tmp1, getString(a).data(), 10, MPFR_RNDN);
 //        char *s;
 //        mp_exp_t e;
 //        s = mpfr_get_str(NULL, &e, 10, 510, tmp1, MPFR_RNDN);
@@ -270,7 +270,7 @@ REAL _cos(REAL a, REAL, QByteArray &)
     try
     {
 //        mpfr_init_set_f(tmp1, a.get_mpf_t(), MPFR_RNDN);
-        mpfr_set_str(tmp1, getQString(a).toLocal8Bit().constData(), 10, MPFR_RNDN);
+        mpfr_set_str(tmp1, getString(a).data(), 10, MPFR_RNDN);
         mpfr_cos(result, tmp1, MPFR_RNDN);
         mpfr_get_f(a.get_mpf_t(), result, MPFR_RNDN);
     }
@@ -292,7 +292,7 @@ REAL _tan(REAL a, REAL, QByteArray &)
     try
     {
 //        mpfr_init_set_f(tmp1, a.get_mpf_t(), MPFR_RNDN);
-        mpfr_set_str(tmp1, getQString(a).toLocal8Bit().constData(), 10, MPFR_RNDN);
+        mpfr_set_str(tmp1, getString(a).data(), 10, MPFR_RNDN);
         mpfr_tan(result, tmp1, MPFR_RNDN);
         mpfr_get_f(a.get_mpf_t(), result, MPFR_RNDN);
     }
@@ -338,7 +338,7 @@ REAL _div1(REAL, REAL b, QByteArray &error)
     if (b == ZERO)
     {
         error = QByteArray("ERROR: division by zero error!");
-        output(error.constData());
+        print(error.constData());
         return ZERO;
     }
     return 1 / b;
@@ -349,7 +349,7 @@ REAL _div2(REAL a, REAL b, QByteArray &error)
     if (b == ZERO)
     {
         error = QByteArray("ERROR: division by zero error!");
-        output(error.constData());
+        print(error.constData());
         return ZERO;
     }
     return ZERO - a / (b * b);

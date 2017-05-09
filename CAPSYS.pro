@@ -3,7 +3,6 @@
 # Project created by QtCreator 2016-04-12T18:03:37
 #
 #-------------------------------------------------
-
 QT       += core gui
 QT       += sql
 
@@ -22,7 +21,13 @@ SOURCES += main.cpp\
     source.cpp \
     eval_mpf.cpp \
     functions_for_eval.cpp \
-    complex_mpf.cpp
+    screen.cpp \
+    projects_dialog.cpp \
+    project.cpp \
+    capillary.cpp \
+    ray.cpp \
+    pointonray.cpp \
+    surface.cpp
 
 HEADERS  += mainwindow.h \
 #    dialogsetranges.h \
@@ -32,9 +37,18 @@ HEADERS  += mainwindow.h \
     source.h \
     eval_mpf.h \
     functions_for_eval.h \
-    complex_mpf.h
+    complex_mpf.h \
+    screen.h \
+    projects_dialog.h \
+    connection.h \
+    project.h \
+    capillary.h \
+    ray.h \
+    pointonray.h \
+    surface.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    projects_dialog.ui
 #    dialogsetranges.ui
 
 OTHER_FILES +=

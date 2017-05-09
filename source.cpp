@@ -1,52 +1,119 @@
 #include "source.h"
 
-Source::Source(const char * surface_source
-               , const char * t_x_lower
-               , const char * t_x_upper
-               , const char * t_y_lower
-               , const char * t_y_upper
-               , const char * t_z_lower
-               , const char * t_z_upper
-               , const char * t_phi_lower
-               , const char * t_phi_upper
-               , const char * t_theta_lower
-               , const char * t_theta_upper) :
-    surface(surface_source)
-    , x_lower(t_x_lower, NUMBITS)
-    , x_upper(t_x_upper, NUMBITS)
-    , y_lower(t_y_lower, NUMBITS)
-    , y_upper(t_y_upper, NUMBITS)
-    , z_lower(t_z_lower, NUMBITS)
-    , z_upper(t_z_upper, NUMBITS)
-    , phi_lower(t_phi_lower, NUMBITS)
-    , phi_upper(t_phi_upper, NUMBITS)
-    , theta_lower(t_theta_lower, NUMBITS)
-    , theta_upper(t_theta_upper, NUMBITS)
-    , speed_of_light("0.0", NUMBITS)
+
+Source::Source(const char * surfaceSource
+               , const char * tXLower
+               , const char * tXUpper
+               , const char * tYLower
+               , const char * tYUpper
+               , const char * tZLower
+               , const char * tZUpper
+               , const char * tPhiLower
+               , const char * tPhiUpper
+               , const char * tThetaLower
+               , const char * tThetaUpper) :
+    surface(0),
+    surfaceSource(surfaceSource),
+    xLower(tXLower, NUMBITS)
+    , xUpper(tXUpper, NUMBITS)
+    , yLower(tYLower, NUMBITS)
+    , yUpper(tYUpper, NUMBITS)
+    , zLower(tZLower, NUMBITS)
+    , zUpper(tZUpper, NUMBITS)
+    , phiLower(tPhiLower, NUMBITS)
+    , phiUpper(tPhiUpper, NUMBITS)
+    , thetaLower(tThetaLower, NUMBITS)
+    , thetaUpper(tThetaUpper, NUMBITS)
+    , speedOfLight("0.0", NUMBITS)
+    , currentRay(0)
 {
     //?? speed_of_light = ...
 }
 
+Source::Source(int sourceId):
+    id(sourceId),
+    dimensionM(-6),
+    surface(0),
+    xLower("0.0", NUMBITS),
+    xUpper("0.0", NUMBITS),
+    yLower("0.0", NUMBITS),
+    yUpper("0.0", NUMBITS),
+    zLower("0.0", NUMBITS),
+    zUpper("0.0", NUMBITS),
+    phiLower("0.0", NUMBITS),
+    phiUpper("0.0", NUMBITS),
+    thetaLower("0.0", NUMBITS),
+    thetaUpper("0.0", NUMBITS),
+    speedOfLight("0.0", NUMBITS),
+    currentRay(0),
+    comment("")
+{
+    print((QString("#creating Source, id:") + QString::number(id)).toLocal8Bit().constData(), true);
+
+    // get source
+    QSqlQuery query;
+    query.prepare("SELECT surface_id, "
+                  "x_lower, x_upper, "
+                  "y_lower, y_upper, "
+                  "z_lower, z_upper, "
+                  "phi_lower, phi_upper, "
+                  "theta_lower, theta_upper, "
+                  "dimension_m, comment "
+                  "FROM sources WHERE id = ?");
+    query.addBindValue(id);
+    query.exec();
+    if (query.next())
+    {
+        surface     = new Surface(query.value("surface_id").toInt());
+        xLower      = query.value("x_lower").toByteArray().constData();
+        xUpper      = query.value("x_upper").toByteArray().constData();
+        yLower      = query.value("y_lower").toByteArray().constData();
+        yUpper      = query.value("y_upper").toByteArray().constData();
+        zLower      = query.value("z_lower").toByteArray().constData();
+        zUpper      = query.value("z_upper").toByteArray().constData();
+        phiLower    = query.value("phi_lower").toByteArray().constData();
+        phiUpper    = query.value("phi_upper").toByteArray().constData();
+        thetaLower  = query.value("theta_lower").toByteArray().constData();
+        thetaUpper  = query.value("theta_upper").toByteArray().constData();
+        dimensionM  = query.value("dimension_m").toInt();
+        comment     = query.value("comment").toByteArray();
+    }
+    else
+    {
+        //?? вызвать исключение!
+    }
+}
+
 Source::~Source()
 {
+    delete currentRay;
+    currentRay = 0;
+    delete surface;
+    surface = 0;
+    print((QString("#deleting Source, id:") + QString::number(id)).toLocal8Bit().constData(), true);
+}
 
+Ray *Source::makeRay()
+{
+    currentRay = new Ray(this);
+    return currentRay;
 }
 
 int Source::get_random_x_y_z(VEC_R &point_source, int num_of_attempts)
 {
-    Eval eval(surface);
+    Eval eval(surface->getEquationConstData());
     REAL rand_x("0.0", NUMBITS), rand_y("0.0", NUMBITS), rand_z("0.0", NUMBITS);
     REAL tmp("0.0", NUMBITS);
     int i = 0;
     do
     {
-        rand_x = utils.getRandom(x_lower, x_upper);
-        rand_y = utils.getRandom(y_lower, y_upper);
-        rand_z = utils.getRandom(z_lower, z_upper);
+        rand_x = utils.getRandom(xLower, xUpper);
+        rand_y = utils.getRandom(yLower, yUpper);
+        rand_z = utils.getRandom(zLower, zUpper);
         tmp = eval.getValue(rand_x, rand_y, rand_z);
         if (i > num_of_attempts)
         {
-            output("ERROR: get_random_x_y_z: exceeded the number of attempts!");
+            print("ERROR: get_random_x_y_z: exceeded the number of attempts!");
             return -1;
         }
         ++i;
@@ -71,8 +138,8 @@ int Source::get_random_x_y_z(VEC_R &point_source, int num_of_attempts)
 
 int Source::get_random_phi_theta(REAL &phi, REAL &theta)
 {
-    phi = utils.getRandom(phi_lower, phi_upper);
-    theta = utils.getRandom(theta_lower, theta_upper);
+    phi = utils.getRandom(phiLower, phiUpper);
+    theta = utils.getRandom(thetaLower, thetaUpper);
 #ifdef DEBUG
     qDebug() << "DEBUG: Source::get_random_phi_theta: phi, theta:" << phi.get_d() << theta.get_d();
 #endif
@@ -81,8 +148,8 @@ int Source::get_random_phi_theta(REAL &phi, REAL &theta)
 
 int Source::get_random_phi_theta(VEC_R &directing_vec, REAL &phi, REAL &theta)
 {
-    phi = utils.getRandom(phi_lower, phi_upper);
-    theta = utils.getRandom(theta_lower, theta_upper);
+    phi = utils.getRandom(phiLower, phiUpper);
+    theta = utils.getRandom(thetaLower, thetaUpper);
 
 //    phi = "0.859400985359577983347432004881730086444736798219626924705158604377759334301092403221924517218627297236633973721598251998460597250942113004804319616643288901";
 //    theta = "-0.0000193159077550345615090556838440020064769474059051326269506160830911371285946705276526889049736152677326126895783480338849908713386366846036831590862313127136";
@@ -99,4 +166,56 @@ int Source::get_random_phi_theta(VEC_R &directing_vec, REAL &phi, REAL &theta)
     qDebug() << "DEBUG: Source::get_random_phi_theta: directing_vec" << directing_vec[0].get_d() << directing_vec[1].get_d() << directing_vec[2].get_d();
 #endif
     return 0;
+}
+
+const REAL * Source::getXLower()
+{
+    return &xLower;
+}
+
+const REAL * Source::getXUpper()
+{
+    return &xUpper;
+}
+
+const REAL * Source::getYLower()
+{
+    return &yLower;
+}
+
+const REAL * Source::getYUpper()
+{
+    return &yUpper;
+}
+
+const REAL * Source::getZLower()
+{
+    return &zLower;
+}
+
+const REAL * Source::getZUpper()
+{
+    return &zUpper;
+}
+
+const REAL * Source::getPhiLower()
+{
+    return &phiLower;
+}
+
+const REAL * Source::getPhiUpper()
+{
+    return &phiUpper;
+}
+
+
+const REAL * Source::getThetaLower()
+{
+    return &thetaLower;
+}
+
+
+const REAL * Source::getThetaUpper()
+{
+    return &thetaUpper;
 }

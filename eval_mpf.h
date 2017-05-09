@@ -21,9 +21,9 @@ private:
     REAL calculateDerivative(int indexVariable, const VEC_R &vecValuesXYZ) const;
 
     // check braces correctness
-    bool check(QByteArray &str);
+    bool check(const QByteArray &str);
     // try to find one of symbols lst in the string str
-    int findInText(QByteArray str, QByteArray pattern);
+    int findInText(const QByteArray &str, const QByteArray &pattern);
 public:
     // formula parser from QByteArray:
     Eval(QByteArray str);

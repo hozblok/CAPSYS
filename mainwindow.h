@@ -9,6 +9,9 @@
 #include "linalg.h"
 #include "eval_mpf.h"
 #include "xrays.h"
+#include "project.h"
+
+#include "projects_dialog.h"
 
 namespace Ui {
 class MainWindow;
@@ -47,8 +50,13 @@ private slots:
 
     void on_lineEdit_3_textEdited(const QString &arg1);
 
+    void startSpread();
+
+    void on_pushButton_3_clicked();
+
 private:
     Ui::MainWindow *ui;
+    ProjectsDialog *projs_dialog;
 };
 
 #endif // MAINWINDOW_H

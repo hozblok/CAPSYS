@@ -7,7 +7,7 @@ XRays::XRays(QObject *parent, QString connectionName) :
     dbase.setDatabaseName("capsys.sqlite");
     if (!dbase.open()) {
         QString tmp = (QString) "ERROR: open_database: Unable to connect to database!" + dbase.lastError().text();
-        output(tmp.toUtf8().data());
+        print(tmp.toUtf8().data());
     }
 }
 
@@ -17,14 +17,14 @@ bool XRays::open_database()
     {
         if (!dbase.open()) {
             QString tmp = (QString) "ERROR: open_database: Unable to connect to database!" + dbase.lastError().text();
-            output(tmp.toUtf8().data());
+            print(tmp.toUtf8().data());
             return false;
         }
     }
     return true;
 }
 
-int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recording_not_captured, int number_of_attempts, bool paranoid_check)
+int XRays::send_ray(VEC_I &cap_id, VEC_I &source_id, bool recording_not_captured, int number_of_attempts, bool paranoid_check)
 {
     if(!open_database())
     {
@@ -59,7 +59,7 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
     }
     else
     {
-        output("ERROR: send_ray: caps no found!");
+        print("ERROR: send_ray: caps no found!");
         return -1;
     }
     //-
@@ -91,7 +91,7 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
     }
     else
     {
-        output("ERROR: send_ray: source no found!");
+        print("ERROR: send_ray: source no found!");
         return -1;
     }
     //-
@@ -137,7 +137,7 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
     {
         if (i > number_of_attempts)
         {
-            output("ERROR: i > number_of_attempts");
+            print("ERROR: i > number_of_attempts");
             return -1;
         }
         source.get_random_x_y_z(point_source);
@@ -156,7 +156,7 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
 //                << getQString(tmp_result_point[0]) << getQString(tmp_result_point[1]) << getQString(tmp_result_point[2]);
         if (tmp_result != 0)
         {
-            output("WARNING: beam could not reach the bottom of the capillary border!");
+            print("WARNING: beam could not reach the bottom of the capillary border!");
             continue;
         }
         else if (eval_surface.getValue(tmp_result_point[0], tmp_result_point[1], tmp_result_point[2]) < ZERO)
@@ -178,11 +178,11 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
                                           "VALUES (:sources_id, :caps_id, :phi, :theta, :x_source, :y_source, :z_source, :captured, :reached_screen);");
             ray_query.bindValue(":sources_id", source_id[0]);
             ray_query.bindValue(":caps_id", cap_id[0]);
-            ray_query.bindValue(":phi", getQString(phi));
-            ray_query.bindValue(":theta", getQString(theta));
-            ray_query.bindValue(":x_source", getQString(point_source[0]));
-            ray_query.bindValue(":y_source", getQString(point_source[1]));
-            ray_query.bindValue(":z_source", getQString(point_source[2]));
+            ray_query.bindValue(":phi", QString::fromStdString(getString(phi)));
+            ray_query.bindValue(":theta", QString::fromStdString(getString(theta)));
+            ray_query.bindValue(":x_source", QString::fromStdString(getString(point_source[0])));
+            ray_query.bindValue(":y_source", QString::fromStdString(getString(point_source[1])));
+            ray_query.bindValue(":z_source", QString::fromStdString(getString(point_source[2])));
             ray_query.bindValue(":captured", 0);
             ray_query.bindValue(":reached_screen", 0);
             ray_query.exec();
@@ -194,15 +194,15 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
                                     "VALUES (:rays_id, :number_in_ray, :x, :y, :z, :angle, :on_source, :on_screen);");
             point_query.bindValue(":rays_id", ray_id);
             point_query.bindValue(":number_in_ray", 0);
-            point_query.bindValue(":x", getQString(point_source[0]));
-            point_query.bindValue(":y", getQString(point_source[1]));
-            point_query.bindValue(":z", getQString(point_source[2]));
+            point_query.bindValue(":x", QString::fromStdString(getString(point_source[0])));
+            point_query.bindValue(":y", QString::fromStdString(getString(point_source[1])));
+            point_query.bindValue(":z", QString::fromStdString(getString(point_source[2])));
             point_query.bindValue(":angle", ""); //"0."
             point_query.bindValue(":on_source", 1);
             point_query.bindValue(":on_screen", 0);
             point_query.exec();
             //---------------------------------------------
-            output("@@@ OK: not_captured!");
+            print("@@@ OK: not_captured!");
 #ifdef DEBUG
             output("@@@ OK: not_captured!");
 #endif
@@ -212,7 +212,7 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
     }
     if (!flag_captured)
     {
-        output("ERROR: Send ray: Unknown error");
+        print("ERROR: Send ray: Unknown error");
         return -1;
     }
     else
@@ -233,11 +233,11 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
                                   "VALUES (:sources_id, :caps_id, :phi, :theta, :x_source, :y_source, :z_source, :captured, :reached_screen);");
     ray_query.bindValue(":sources_id", source_id[0]);
     ray_query.bindValue(":caps_id", cap_id[0]);
-    ray_query.bindValue(":phi", getQString(phi));
-    ray_query.bindValue(":theta", getQString(theta));
-    ray_query.bindValue(":x_source", getQString(point_source[0]));
-    ray_query.bindValue(":y_source", getQString(point_source[1]));
-    ray_query.bindValue(":z_source", getQString(point_source[2]));
+    ray_query.bindValue(":phi", QString::fromStdString(getString(phi)));
+    ray_query.bindValue(":theta", QString::fromStdString(getString(theta)));
+    ray_query.bindValue(":x_source", QString::fromStdString(getString(point_source[0])));
+    ray_query.bindValue(":y_source", QString::fromStdString(getString(point_source[1])));
+    ray_query.bindValue(":z_source", QString::fromStdString(getString(point_source[2])));
     ray_query.bindValue(":captured", 1);
     ray_query.bindValue(":reached_screen", 0);
     ray_query.exec();
@@ -249,9 +249,9 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
                             "VALUES (:rays_id, :number_in_ray, :x, :y, :z, :angle, :on_source, :on_screen);");
     point_query.bindValue(":rays_id", ray_id);
     point_query.bindValue(":number_in_ray", 0);
-    point_query.bindValue(":x", getQString(point_source[0]));
-    point_query.bindValue(":y", getQString(point_source[1]));
-    point_query.bindValue(":z", getQString(point_source[2]));
+    point_query.bindValue(":x", QString::fromStdString(getString(point_source[0])));
+    point_query.bindValue(":y", QString::fromStdString(getString(point_source[1])));
+    point_query.bindValue(":z", QString::fromStdString(getString(point_source[2])));
     point_query.bindValue(":angle", "");//"0."
     point_query.bindValue(":on_source", 1);
     point_query.bindValue(":on_screen", 0);
@@ -270,7 +270,7 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
     {
         if (number_point > number_of_attempts)
         {
-            output("ERROR: Send ray: number_point > number_of_attempts");
+            print("ERROR: Send ray: number_point > number_of_attempts");
             return -1;
         }
         int tmp_result = linalg.NewtonMetodForSurfaceAndStraightLine(surface_of_cap
@@ -299,11 +299,11 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
             //construct surface_of_cap_modified
             if (tmp_result_point[2] >= ZERO)
             {
-                surface_of_cap_modified = "(" + surface_of_cap_modified + ")/(z-" + getQString(tmp_result_point[2]).toUtf8() + ")";
+                surface_of_cap_modified = "(" + surface_of_cap_modified + ")/(z-" + getString(tmp_result_point[2]).data() + ")";
             }
             else
             {
-                surface_of_cap_modified = "(" + surface_of_cap_modified + ")/(z+" + getQString(abs(tmp_result_point[2])).toUtf8() + ")";
+                surface_of_cap_modified = "(" + surface_of_cap_modified + ")/(z+" + getString(abs(tmp_result_point[2])).data() + ")";
             }
             // some const
             tmp_wrong += ut.getRandom() * 1000.0;
@@ -337,7 +337,7 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
         {
             if (j > number_of_attempts)
             {
-                output("ERROR: Send Ray: Failed to find the second point of intersection of the beam. capillary has a hole?");
+                print("ERROR: Send Ray: Failed to find the second point of intersection of the beam. capillary has a hole?");
                 return -1;
             }
             REAL tmp_rnd1("-1e10", NUMBITS), tmp_rnd2("1e10", NUMBITS);
@@ -359,7 +359,7 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
                                                                          ,accuracy);
             if (tmp_result != 0)
             {
-                output("ERROR: Send Ray 2.2: continue");
+                print("ERROR: Send Ray 2.2: continue");
                 continue;
             }
             for (int j = 0; j < sizeColumns; ++j)
@@ -401,11 +401,11 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
                     tmp_result_point[0] = tmp_result_point_check[0];
                     tmp_result_point[1] = tmp_result_point_check[1];
                     tmp_result_point[2] = tmp_result_point_check[2];
-                    surface_of_cap_modified = "(" + surface_of_cap_modified + ")/(z-(" + getQString(tmp_result_point[2]).toUtf8() + "))";
+                    surface_of_cap_modified = "(" + surface_of_cap_modified + ")/(z-(" + getString(tmp_result_point[2]).data() + "))";
                 }
                 else
                 {
-                    surface_of_cap_modified = "(" + surface_of_cap_modified + ")/(z-(" + getQString(tmp_result_point_check[2]).toUtf8() + "))";
+                    surface_of_cap_modified = "(" + surface_of_cap_modified + ")/(z-(" + getString(tmp_result_point_check[2]).data() + "))";
                 }
                 tmp_result = linalg.NewtonMetodForSurfaceAndStraightLine(surface_of_cap
                                                                          , surface_of_cap_modified
@@ -446,7 +446,7 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
         //+ разворачиваем направляющий вектор
         for (int j = 0; j < sizeColumns; ++j)
         {
-            tmp_normal_to_surface[j] = eval_surface.getValueDerivative(namesOfVariables[j], tmp_result_point[0], tmp_result_point[1], tmp_result_point[2]);
+            tmp_normal_to_surface[j] = eval_surface.getValueDerivative(namesOfVar[j], tmp_result_point[0], tmp_result_point[1], tmp_result_point[2]);
         }
         REAL tmp("0.0", NUMBITS), tmp_projection("0.0", NUMBITS);
         tmp = sqrt(tmp_normal_to_surface[0] * tmp_normal_to_surface[0] +
@@ -472,10 +472,10 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
                                 "VALUES (:rays_id, :number_in_ray, :x, :y, :z, :angle, :on_source, :on_screen);");
         point_query.bindValue(":rays_id", ray_id);
         point_query.bindValue(":number_in_ray", number_point);
-        point_query.bindValue(":x", getQString(tmp_result_point[0]));
-        point_query.bindValue(":y", getQString(tmp_result_point[1]));
-        point_query.bindValue(":z", getQString(tmp_result_point[2]));
-        point_query.bindValue(":angle", getQString(angle));
+        point_query.bindValue(":x", QString::fromStdString(getString(tmp_result_point[0])));
+        point_query.bindValue(":y", QString::fromStdString(getString(tmp_result_point[1])));
+        point_query.bindValue(":z", QString::fromStdString(getString(tmp_result_point[2])));
+        point_query.bindValue(":angle", QString::fromStdString(getString(angle)));
         point_query.bindValue(":on_source", 0);
         point_query.bindValue(":on_screen", 0);
         point_query.exec();
@@ -527,9 +527,9 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
                                 "VALUES (:rays_id, :number_in_ray, :x, :y, :z, :angle, :on_source, :on_screen);");
         point_query.bindValue(":rays_id", ray_id);
         point_query.bindValue(":number_in_ray", number_point);
-        point_query.bindValue(":x", getQString(tmp_result_point[0]));
-        point_query.bindValue(":y", getQString(tmp_result_point[1]));
-        point_query.bindValue(":z", getQString(tmp_result_point[2]));
+        point_query.bindValue(":x", QString::fromStdString(getString(tmp_result_point[0])));
+        point_query.bindValue(":y", QString::fromStdString(getString(tmp_result_point[1])));
+        point_query.bindValue(":z", QString::fromStdString(getString(tmp_result_point[2])));
         point_query.bindValue(":angle", "");//getQString(angle));
         point_query.bindValue(":on_source", 0);
         point_query.bindValue(":on_screen", 1);
@@ -548,7 +548,7 @@ int XRays::send_ray(QVector<int> &cap_id, QVector<int> &source_id, bool recordin
     }
     else
     {
-        output("ERROR: Send ray: Unknown error!");
+        print("ERROR: Send ray: Unknown error!");
         return -1;
     }
 //    qDebug() << "@@@ OK: Send Ray: (flag_ray_departed, flag_ray_on_screen)" <<  flag_ray_departed << flag_ray_on_screen;
@@ -617,7 +617,7 @@ double XRays::getCoefOfRefl(double theta, double nu)
 
 
   //  qDebug() << tempComplSqrt.real() << tempComplSqrt.imag();
-    double tempsin = std::sin(theta);
+//    double tempsin = std::sin(theta);
 //    qDebug() << "nu:" << nu << "plasmaFrequency/nu:" << plasmaFrequency/nu << "angle theta:" << theta;
 //    qDebug() << "nu*4.135667517e-6:" << (nu*4.135667517e-6) << "sqrt(coef):" << std::abs((tempsin - tempComplSqrt)/(tempsin + tempComplSqrt));
     return (std::pow(std::abs( (tmp2sin - tempComplSqrt)/(tmp2sin + tempComplSqrt) ),2));

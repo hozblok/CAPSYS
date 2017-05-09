@@ -2,6 +2,7 @@
 #define FUNCTIONS_FOR_EVAL_H
 
 #include "settings.h"
+#include "QtCore"
 
 typedef REAL (*mathFunction)(REAL, REAL, QByteArray &);
 

@@ -15,22 +15,21 @@ Eval::Eval(QByteArray string) :
     {
         codeStr = "num";
         value = "0.0";
-        //qDebug() << codeStr << "current" << string;
         return;
     }
     string = string.toLower();
-    string.replace(QByteArray(" "), QByteArray(""));
 
+    // remove spaces
+    string.replace(QByteArray(" "), QByteArray(""));
     // remove braces
     if (string.startsWith("(") && string.endsWith(")") && check(string))
     {
-        string.remove(0,1);
+        string.remove(0, 1);
         string.chop(1);
     }
 
     // lowest priority -- logical
-    int n;
-    n = findInText(string, QByteArray("&|"));
+    int n = findInText(string, QByteArray("&|"));
     if (n >= 0)
     {
         if (string[n] == '|')
@@ -43,7 +42,6 @@ Eval::Eval(QByteArray string) :
         }
         leftEval = new Eval(string.left(n));
         rightEval = new Eval(string.mid(n + 1));
-        //qDebug() << codeStr << "current" << string;
         return;
     }
     // low priority -- conditions
@@ -64,13 +62,11 @@ Eval::Eval(QByteArray string) :
         }
         leftEval = new Eval(string.left(n));
         rightEval = new Eval(string.mid(n + 1));
-        //qDebug() << codeStr << "current" << string;
         return;
     }
     // normal priority -- additions
     n = findInText(string, QByteArray("+-"));
-//    //qDebug() << "@@" << n << string << (n<2 || string.mid(n-1,1)!=QByteArray("e") || (string.mid(n-2,1)!=QByteArray(".") && !isdigit((int)string.mid(n-2,1).constData())));
-    if(n >= 0)
+    if (n >= 0)
     {
         if (string[n] == '+')
         {
@@ -80,9 +76,6 @@ Eval::Eval(QByteArray string) :
         {
             codeStr = "sub";
         }
-        //qDebug() << codeStr << "current" << string;
-        //qDebug() << codeStr << "leftEval" << string.left(n);
-        //qDebug() << codeStr << "rightEval" << string.mid(n + 1);
         leftEval = new Eval(string.left(n));
         rightEval = new Eval(string.mid(n + 1));
         return;
@@ -101,9 +94,6 @@ Eval::Eval(QByteArray string) :
         }
         leftEval = new Eval(string.left(n));
         rightEval = new Eval(string.mid(n + 1));
-        //qDebug() << codeStr << "current" << string;
-        //qDebug() << "mul leftEval" << string.left(n);
-        //qDebug() << "mul rightEval" << string.mid(n + 1);
         return;
     }
     // highest priority -- power
@@ -113,29 +103,34 @@ Eval::Eval(QByteArray string) :
         codeStr = "ipow";
         leftEval = new Eval(string.left(n));
         rightEval = new Eval(string.mid(n + 1));
-        //qDebug() << codeStr << "current" << string;
         return;
     }
+
     int len = string.size();
-    for (n = 0; n < len; ++n)
+    n = string.indexOf('(');
+    if (n == len - 1) // this is error, delete last '('
     {
-        if (string[n] == '(')
-        {
-            break;
-        }
+        string.chop(1);
+        n = -1;
+        len--;
     }
-    if (n >= len) // "var" or "rnd" or "num" or "pi"
+    if (n == -1) // there is no '(' => codeStr == "var" or "rnd" or "num" or "pi"
     {
-        // available variables
-        if (string.size() == 1 && string[0] >= 'a' && string[0] <= 'z')
+        if (len == 1 && string.at(0) >= 'a' && string.at(0) <= 'z') // x or y or z or other available variables
         {
             codeStr = "var";
-            indexNameOfVar = indexesOfVariables.value(string[0], -1);
+            try
+            {
+                indexNameOfVar = indexesOfVar.at(string[0]);
+            }
+            catch(...) // std::out_of_range
+            {
+                indexNameOfVar = -1;
+            }
             if (indexNameOfVar == -1)
             {
                 error = true;
                 errorDescr = QByteArray("ERROR: unknown variable: ") + string[0];
-                //qDebug() << codeStr << "current" << string << errorDescr;
                 return;
             }
         }
@@ -160,39 +155,31 @@ Eval::Eval(QByteArray string) :
                 value = "0.0";
                 error = true;
                 errorDescr = QByteArray("ERROR: unknown number: ") + string;
-                //qDebug() << codeStr << "current" << string << errorDescr;
                 return;
             }
         }
     }
-    else if (n < len) // this is function:
+    else if (n < len) // this is a function:
     {
-        QByteArray name_fun;
-        name_fun.append(string.left(n));
+        QByteArray name_fun = string.left(n);
         string.remove(0, n + 1);
         string.chop(1);
         QMap<QByteArray, mathFunction>::const_iterator it;
         bool flag_found = false;
         for (it = map.begin(); it != map.end(); ++it)
         {
-            //qDebug() << name_fun << it.key() << codeStr << string.left(n) << "######current" << string << errorDescr;
-            if (name_fun.indexOf(it.key()) == 0)
+            if (name_fun == it.key())
             {
                 codeStr.clear();
                 codeStr.append(it.key());
                 flag_found = true;
-            }
-            if (flag_found)
-            {
                 break;
             }
-
         }
         if (!flag_found)
         {
             error = true;
-            errorDescr = QByteArray("unknown function: ") + it.key();
-            //qDebug() << codeStr << "current" << string << errorDescr;
+            errorDescr = QByteArray("ERROR: unknown function: ") + it.key();
             return;
         }
         n = findInText(string, QByteArray(","));
@@ -206,18 +193,19 @@ Eval::Eval(QByteArray string) :
             leftEval = new Eval(string);
         }
     }
-    //qDebug() << codeStr << "!current" << string << errorDescr;
 }
 
 Eval::~Eval()
 {
-    if (leftEval)
+    if (leftEval != 0)
     {
         delete leftEval;
+        leftEval = 0;
     }
-    if (rightEval)
+    if (rightEval != 0)
     {
         delete rightEval;
+        rightEval = 0;
     }
 }
 
@@ -229,9 +217,9 @@ REAL Eval::getValue(REAL x, REAL y, REAL z) const
         vecValuesXYZ[i] = "0.0";
         vecValuesXYZ[i].set_prec(NUMBITS);
     }
-    vecValuesXYZ[indexesOfVariables['x']] = x;
-    vecValuesXYZ[indexesOfVariables['y']] = y;
-    vecValuesXYZ[indexesOfVariables['z']] = z;
+    vecValuesXYZ[indexesOfVar.at('x')] = x;
+    vecValuesXYZ[indexesOfVar.at('y')] = y;
+    vecValuesXYZ[indexesOfVar.at('z')] = z;
     return calculateThroghTree(vecValuesXYZ);
 }
 
@@ -239,7 +227,7 @@ REAL Eval::getValue(const VEC_R vecValuesXYZ) const
 {
     if (vecValuesXYZ.size() != sizeColumns)
     {
-        output("ERROR: Eval::getValue: Invalid vector format!");
+        print("ERROR: Eval::getValue: Invalid vector format!");
         return ZERO;
     }
     return calculateThroghTree(vecValuesXYZ);
@@ -253,10 +241,10 @@ REAL Eval::getValueDerivative(char diff, REAL x, REAL y, REAL z) const
         vecValuesXYZ[i] = "0.0";
         vecValuesXYZ[i].set_prec(NUMBITS);
     }
-    vecValuesXYZ[indexesOfVariables['x']] = x;
-    vecValuesXYZ[indexesOfVariables['y']] = y;
-    vecValuesXYZ[indexesOfVariables['z']] = z;
-    return calculateDerivative(indexesOfVariables[diff], vecValuesXYZ);
+    vecValuesXYZ[indexesOfVar.at('x')] = x;
+    vecValuesXYZ[indexesOfVar.at('y')] = y;
+    vecValuesXYZ[indexesOfVar.at('z')] = z;
+    return calculateDerivative(indexesOfVar.at(diff), vecValuesXYZ);
 }
 
 
@@ -264,15 +252,15 @@ REAL Eval::getValueDerivative(char diff, const VEC_R vecValuesXYZ) const
 {
     if (vecValuesXYZ.size() != sizeColumns)
     {
-        output("ERROR: Eval::getValueDerivative: Invalid vector format!");
+        print("ERROR: Eval::getValueDerivative: Invalid vector format!");
         return ZERO;
     }
-    return calculateDerivative(indexesOfVariables[diff], vecValuesXYZ);
+    return calculateDerivative(indexesOfVar.at(diff), vecValuesXYZ);
 }
 
 REAL Eval::calculateThroghTree(const VEC_R &vecValuesXYZ) const
 {
-    //qDebug() << "codeStr" << codeStr;
+//    qDebug() << " dbg @calculateThroghTree: codeStr" << codeStr;
     if (codeStr == "rnd")
     {
         return utils.getRandom();
@@ -284,18 +272,16 @@ REAL Eval::calculateThroghTree(const VEC_R &vecValuesXYZ) const
     }
     else if (codeStr == "var")
     {
-        //qDebug() << "vecValuesXYZ[indexNameOfVar]" << getQString(vecValuesXYZ[indexNameOfVar]);
+//        qDebug() << "vecValuesXYZ[indexNameOfVar]" << QString::fromStdString(getString(vecValuesXYZ[indexNameOfVar]));
         return vecValuesXYZ[indexNameOfVar];
     }
 
-    REAL a("0.0", NUMBITS);
-    REAL b("0.0", NUMBITS);
-//    //qDebug() << "leftEval->codeStr" <<  leftEval->codeStr << "rightEval->codeStr" << rightEval->codeStr;
-    if (leftEval->getCodeStr() != QByteArray("404"))
+    REAL a("0.0", NUMBITS), b("0.0", NUMBITS);
+    if (leftEval != 0 && leftEval->getCodeStr() != QByteArray("404"))
     {
         a = leftEval->calculateThroghTree(vecValuesXYZ);
     }
-    if (rightEval->getCodeStr() != QByteArray("404"))
+    if (rightEval != 0 && rightEval->getCodeStr() != QByteArray("404"))
     {
         b = rightEval->calculateThroghTree(vecValuesXYZ);
     }
@@ -333,6 +319,7 @@ REAL Eval::calculateDerivative(int indexVariable, const VEC_R &vecValuesXYZ) con
     a = leftEval->calculateThroghTree(vecValuesXYZ);
     d = leftEval->calculateDerivative(indexVariable,vecValuesXYZ);
 
+    //?? тут явно нужна база данных настроек - ещё один файлик sqlite
     if (codeStr == "lt"
             || codeStr == "gt"
             || codeStr == "eq"
@@ -365,16 +352,17 @@ REAL Eval::calculateDerivative(int indexVariable, const VEC_R &vecValuesXYZ) con
     return ZERO;
 }
 
-bool Eval::check(QByteArray &str)
+bool Eval::check(const QByteArray &str)
 {
     int s = 0;
+    //?? тут явно надо представить более красивое решение
     for (int i = 1; i < str.size() - 1; i++)
     {
         if (str[i] == '(')
         {
             s++;
         }
-        if (str[i] == ')')
+        else if (str[i] == ')')
         {
             s--;
         }
@@ -386,22 +374,28 @@ bool Eval::check(QByteArray &str)
     return (s == 0) ? true : false;
 }
 
-int Eval::findInText(QByteArray str, QByteArray pattern)
+int Eval::findInText(const QByteArray &str, const QByteArray &pattern)
 {
-    int l = 0, r = 0;
-    for (int i = str.size() - 1; i >= 0; --i)
+    int countLBraces = 0, countRBraces = 0;
+    //for (int i = str.size() - 1; i >= 0; --i)
+    for (QByteArray::const_iterator it = str.cend(); it != str.cbegin(); )
     {
-        if (str[i]=='(')
+        --it;
+        //if (str.at(i) == '(')
+        if (*it == '(')
         {
-            l++;
+            countLBraces++;
         }
-        if (str[i]==')')
+        //else if (str.at(i) == ')')
+        else if (*it == ')')
         {
-            r++;
+            countRBraces++;
         }
-        if (l == r && pattern.indexOf(str[i]) >= 0)
+        //if (countLBraces == countRBraces && pattern.indexOf(str.at(i)) >= 0)
+        if (countLBraces == countRBraces && pattern.indexOf(*it) >= 0)
         {
-            return i;
+            //return i;
+            return (it - str.cbegin());
         }
     }
     return -1;

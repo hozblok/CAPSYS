@@ -1,9 +1,8 @@
 #include "settings.h"
 
-int output(const char * message)
+void print(const char * message, bool information)
 {
     qDebug() << message;
-    return 0;
 }
 
 #if USE_MPF_CLASS
@@ -22,29 +21,43 @@ REAL Utils::getRandom(REAL &lower, REAL &upper)
     return (lower + (upper - lower) * random.get_f(NUMBITS));
 }
 
+REAL Utils::getRandom(const REAL * const lower, const REAL * const upper)
+{
+    return (*lower + (*upper - *lower) * random.get_f(NUMBITS));
+}
+
+
 REAL Utils::getRandom()
 {
     return (random.get_f(NUMBITS));
 }
 
-QString getQString(const REAL value, bool flagE)
+int Utils::getSimpleRandomInt(int max)
 {
-    QString result = "";
+    QTime midnight(0,0,0);
+    qsrand(midnight.secsTo(QTime::currentTime()));
+    return qrand() % (max + 1);
+}
+
+// convert REAL to string, for example "0.000000000314" or "3.14e-10" then flagE = true
+std::string getString(const REAL value, bool flagE)
+{
+    std::string result = "";
     mp_exp_t exp;
-    QString str = QString::fromStdString(value.get_str(exp, 10, 0));
+    std::string str = value.get_str(exp, 10, 0);
     if (flagE)
     {
         result.append(str);
         if (str[0] == '-' || str[0] == '+')
         {
-            result.insert(1, QString("0."));
+            result.insert(1, std::string("0."));
         }
         else
         {
-            result.insert(0, QString("0."));
+            result.insert(0, std::string("0."));
         }
-        result.append(QString("e"));
-        result.append(QString::number(exp));
+        result.append("e");
+        result.append(IntToStr(exp));
     }
     else
     {
@@ -52,7 +65,7 @@ QString getQString(const REAL value, bool flagE)
         if (str[0] == '-')
         {
             flagMinus = true;
-            str.remove(0, 1);
+            str.erase(0, 1);
         }
         int lenStr = str.size();
         if (exp > 0)
@@ -61,24 +74,24 @@ QString getQString(const REAL value, bool flagE)
             {
                 for(int i = 0; i < exp - lenStr + 1; ++i)
                 {
-                    str.append(QString("0"));
+                    str.append("0");
                 }
             }
-            str.insert(exp, QString("."));
+            str.insert(exp, ".");
             result = str;
         }
         else
         {
             for (int i = 0; i < abs(exp) + 1; ++i)
             {
-                result.append(QString("0"));
+                result.append("0");
             }
             result.append(str);
-            result.insert(1, QString("."));
+            result.insert(1, ".");
         }
         if (flagMinus)
         {
-            result.prepend('-');
+            result.insert(0,"-");
         }
     }
 

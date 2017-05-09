@@ -129,7 +129,7 @@ public:
 
     void show()
     {
-        qDebug() << getQString(real) << " + i " << getQString(imag);
+        qDebug() << QString::fromStdString(getString(real)) << " + i " << QString::fromStdString(getString(imag));
     }
 };
 

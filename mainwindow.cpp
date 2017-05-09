@@ -5,6 +5,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+    projs_dialog = new ProjectsDialog(this);
     ui->setupUi(this);
 
     ui->capsListWidget->addItem(QString::number(3));
@@ -14,6 +15,11 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->pushButton_delSource, SIGNAL(clicked()), this, SLOT(deleteSourceId_clicked()));
     connect(ui->pushButton_addCap, SIGNAL(clicked()), this, SLOT(addCapId_clicked()));
     connect(ui->pushButton_addSource, SIGNAL(clicked()), this, SLOT(addSourceId_clicked()));
+
+    connect(ui->comboBox_dbtables, SIGNAL(activated(QString)), projs_dialog, SLOT(slotSetTable(QString)));
+    connect(ui->pushButton_TestTableBD, SIGNAL(clicked()), projs_dialog, SLOT(exec()));
+
+    connect(ui->pushButton_start, SIGNAL(clicked()), this, SLOT(startSpread()));
 }
 
 MainWindow::~MainWindow()
@@ -27,10 +33,10 @@ void MainWindow::on_lineEdit_textEdited(const QString &arg1)
     {
         REAL temp(arg1.toLocal8Bit().constData(), NUMBITS);
         temp = temp / PlanckConstant;
-        ui->lineEdit_2->setText(getQString(temp, true));
+        ui->lineEdit_2->setText(QString::fromStdString(getString(temp, true)));
         REAL temp2(arg1.toLocal8Bit().constData(), NUMBITS);
         temp2 = SpeedOfLight * PlanckConstant / temp2;
-        ui->lineEdit_3->setText(getQString(temp2, true));
+        ui->lineEdit_3->setText(QString::fromStdString(getString(temp2, true)));
     }
     catch(...)
     {
@@ -45,10 +51,10 @@ void MainWindow::on_lineEdit_2_textEdited(const QString &arg1)
     {
         REAL temp(arg1.toLocal8Bit().constData(), NUMBITS);
         temp = temp * PlanckConstant;
-        ui->lineEdit->setText(getQString(temp, true));
+        ui->lineEdit->setText(QString::fromStdString(getString(temp, true)));
         REAL temp2(arg1.toLocal8Bit().constData(), NUMBITS);
         temp2 = SpeedOfLight / temp2;
-        ui->lineEdit_3->setText(getQString(temp2, true));
+        ui->lineEdit_3->setText(QString::fromStdString(getString(temp2, true)));
     }
     catch(...)
     {
@@ -63,10 +69,10 @@ void MainWindow::on_lineEdit_3_textEdited(const QString &arg1)
     {
         REAL temp(arg1.toLocal8Bit().constData(), NUMBITS);
         temp = SpeedOfLight * PlanckConstant / temp;
-        ui->lineEdit->setText(getQString(temp, true));
+        ui->lineEdit->setText(getString(temp, true).data());
         REAL temp2(arg1.toLocal8Bit().constData(), NUMBITS);
         temp2 = SpeedOfLight / temp2;
-        ui->lineEdit_2->setText(getQString(temp2, true));
+        ui->lineEdit_2->setText(getString(temp2, true).data());
     }
     catch(...)
     {
@@ -106,7 +112,7 @@ int cout(VEC_VEC_R & matrix, int sizeRows = 3, int size_col = 3)
         qDebug() << temp;
     }
 #else
-    if (size_col = 3)
+    if (size_col == 3)
     {
         for(int i = 0; i < sizeRows; ++i)
         {
@@ -130,7 +136,7 @@ int cout(VEC_R & vec, int size = 3)
     }
     qDebug() << temp;
 #else
-    if (size = 3)
+    if (size == 3)
     {
         qDebug() << vec[0] << " " << vec[1] << " " << vec[2];
     }
@@ -141,7 +147,7 @@ int cout(VEC_R & vec, int size = 3)
 
 int cout(VEC_I & vec, int size = 3)
 {
-    if (size = 3)
+    if (size == 3)
     {
         qDebug() << vec[0] << " " << vec[1] << " " << vec[2];
     }
@@ -216,7 +222,7 @@ int test_linal_gmp()
 
 void MainWindow::on_pushButton_5_clicked()
 {
-    int bit_of_double = sizeof(double) * 8; //64 bit
+//    int bit_of_double = sizeof(double) * 8; //64 bit
 #if USE_MPF_CLASS
 //    mpf_set_default_prec(size_of_double_bit * 8); //512 bit
 //    mpfr_set_default_prec(bit_of_double * 8); //512 bit
@@ -385,31 +391,34 @@ void MainWindow::on_pushButton_5_clicked()
 
 void MainWindow::on_pushButton_7_clicked()
 {
+    qDebug() << "### случайное число:";
     REAL ran("0.0", NUMBITS), ONE("1.0", NUMBITS), ZERO("0.0", NUMBITS);
 //    gmp_randclass rr(gmp_randinit_mt);
 
     ran = utils.getRandom(ZERO, ONE);
-//    long int random=ran.get_ui();
+    long int random=ran.get_ui();
 
     mp_exp_t exp;
     std::string str = ran.get_str(exp);
-    qDebug() << str.data() << exp;
-    qDebug() << getQString(ran);
+    qDebug() << str.data() << exp << "ran.get_ui():" << random;
+    qDebug() << getString(ran, true).data();
+    qDebug() << getString(ran).data();
+    qDebug() << "###";
 }
 
 void MainWindow::on_pushButton_8_clicked()
 {
     XRays x(this);
-    QVector<int> capId;
-    QVector<int> sourcId;
+    VEC_I capId;
+    VEC_I sourcId;
     if(ui->capsListWidget->count() < 1 || ui->sourcesListWidget->count() < 1)
     {
         return;
     }
     //??
-    capId.append(ui->capsListWidget->item(0)->text().toInt());
+    capId.push_back(ui->capsListWidget->item(0)->text().toInt());
     //??
-    sourcId.append(ui->sourcesListWidget->item(0)->text().toInt());
+    sourcId.push_back(ui->sourcesListWidget->item(0)->text().toInt());
     qDebug() << "DEBUG: countRays: " << ui->spinBox_countRays->value();
     for(int i = 0; i < ui->spinBox_countRays->value(); ++i)
     {
@@ -420,17 +429,15 @@ void MainWindow::on_pushButton_8_clicked()
 
 void MainWindow::on_pushButton_9_clicked()
 {
-    qDebug() << "privet0";
-    REAL x__("0.0", NUMBITS);
-    qDebug() << "!!!";
-    REAL y__("0.0", NUMBITS), z__("0.0", NUMBITS);
+    qDebug() << "# тест класса eval:";
+    REAL x__("0.0", NUMBITS), y__("0.0", NUMBITS), z__("0.0", NUMBITS);
     REAL x2__("0.0", NUMBITS), y2__("0.0", NUMBITS), z2__("0.0", NUMBITS);
-    qDebug() << "privet01";
+    qDebug() << "accuracy: 1e-40";
     REAL acc__("1e-40", NUMBITS);
+    qDebug() << "x*x + y*y - 1";
+    Eval eval("x*x + y*y - 1");
 
-    qDebug() << "privet1";
-    Eval eval("x*x+y*y-1");
-    qDebug() << "privet2";
+    qDebug() << "берём очень близкие две точки:";
     x__ = "0.964367251971326110233821374689097736910415068718459853808852145918551902769426009554425151260210135458925188462366986082194303245712819671263722070631165609";
     y__ = "0.264567200017826882082853084557167348338202330802380576391265070383561244044468260334165579374961611339519015770215498372184709208058946615580610007478927605";
     z__ = "2123.27046053112661935856519223762197859422259482060988449219629583097909446212488203201765335045537071370260910633566863566636088013292277012911814450724548";
@@ -439,34 +446,39 @@ void MainWindow::on_pushButton_9_clicked()
     y2__ = "0.264567200017826882082853084557167348338207660367486137102687152701716218187097382432135909653526586370872909924638967624032593042647356783492681666800579975";
     z2__ = "2123.27046053112661935856519223762197859401332251115990494482413200040000817275545595224787134687987568663626223094315434388173745239204791504028590045822281";
 
-    qDebug() << getQString(eval.getValue(x__,y__,z__)) << getQString(eval.getValue(x2__,y2__,z2__)) << (eval.getValue(x__,y__,z__) < acc__) << (eval.getValue(x2__,y2__,z2__) < acc__);
+    qDebug() << "f(x1,y1,z1)" <<getString(eval.getValue(x__,y__,z__)).data()
+             << "f(x2,y2,z2)" << getString(eval.getValue(x2__,y2__,z2__)).data()
+             << "f(x1,y1,z1) < acc__" << (eval.getValue(x__,y__,z__) < acc__)
+             << "f(x2,y2,z2) < acc__" << (eval.getValue(x2__,y2__,z2__) < acc__);
     acc__ = z2__ - z__;
-    qDebug() << getQString(acc__);
+    qDebug() << "z2 - z1" << getString(acc__).data();
+    qDebug() << "#";
 }
 
 void MainWindow::on_pushButton_10_clicked()
 {
+    qDebug() << "###";
     REAL xxx(2.25, NUMBITS), test("0.0", NUMBITS);
-    mpf_class yyy(1.5, NUMBITS);
-    qDebug() << "BUY2";
-    Eval asdfasdf("3*x*x+y*y");
-    qDebug() << "BUY3";
-    test = asdfasdf.getValue(xxx, yyy);
+    mpf_class yyy(1.5, NUMBITS); // mpf_class === REAL
+    qDebug() << "Eval: f(x,y)='3*x*x + y*y'";
+    Eval eval_1("3*x*x + y*y");
+    test = eval_1.getValue(xxx, yyy);
 
-    qDebug() << "BUY4";
-    qDebug() << test.get_d();
-    test = asdfasdf.getValueDerivative('x', xxx);
-    qDebug() << test.get_d();
-    qDebug() << "BUY5";
-    Eval asdfadf("sin(x)");
-    qDebug() << "BUY6";
-    test = asdfadf.getValue(xxx);
-    qDebug() << getQString(test);
+    qDebug() << "f(2.25, 1.5):" << test.get_d();
+    test = eval_1.getValueDerivative('x', xxx);
+    qDebug() << "f'x(2.25):" << test.get_d();
+    qDebug() << "Eval f(x)='sin(x)'";
+    Eval eval_2("sin(x)");
+    qDebug() << "f(2.25):";
+    test = eval_2.getValue(xxx);
+    qDebug() << getString(test).data();
+    qDebug() << "теперь получим 2 * asin(1) без использования eval:";
     QByteArray aa;
-    test = 2 * _asin(ONE,ZERO,aa);
-    qDebug() << getQString(test);
+    test = 2 * _asin(ONE, ZERO, aa);
+    qDebug() << getString(test).data();
 
     qDebug() << "mpf_get_default_prec()" << mpf_get_default_prec();
+    qDebug() << "###";
 }
 
 void MainWindow::addCapId_clicked()
@@ -507,14 +519,16 @@ void MainWindow::on_pushButton_clicked()
 {
     REAL x(ui->lineEdit_x->text().toLocal8Bit().constData(), NUMBITS), y(ui->lineEdit_y->text().toLocal8Bit().constData(), NUMBITS), z(ui->lineEdit_z->text().toLocal8Bit().constData(), NUMBITS);
     Eval privet(ui->lineEdit_eval->text().toLocal8Bit());
-    qDebug() << getQString(privet.getValue(x,y,z));
+    qDebug() << getString(privet.getValue(x,y,z)).data();
 }
 
 void MainWindow::on_pushButton_2_clicked()
 {
-    REAL x(ui->lineEdit_x->text().toLocal8Bit().constData(), NUMBITS), y(ui->lineEdit_y->text().toLocal8Bit().constData(), NUMBITS), z(ui->lineEdit_z->text().toLocal8Bit().constData(), NUMBITS);
+    REAL x(ui->lineEdit_x->text().toLocal8Bit().constData(), NUMBITS),
+         y(ui->lineEdit_y->text().toLocal8Bit().constData(), NUMBITS),
+         z(ui->lineEdit_z->text().toLocal8Bit().constData(), NUMBITS);
 //    Eval privet(ui->lineEdit_eval->text().toLocal8Bit());
-    QByteArray error;
+//    QByteArray error;
 //    qDebug() << getQString(_sqrt(x, ZERO, error)*_sqrt(x, ZERO, error));
 
 //    complex_mpf aaa(x, y);
@@ -527,12 +541,28 @@ void MainWindow::on_pushButton_2_clicked()
 //    aaa.show();
 
     XRays xrays(this);
-    qDebug() << "asd1";
+    qDebug() << "xrays getCoefOfRefl:";
     z = xrays.getCoefOfRefl(x,y);
-    qDebug() << "asd2";
 
-    qDebug() << getQString(z) << xrays.getCoefOfRefl(ui->lineEdit_x->text().toLocal8Bit().toDouble(), ui->lineEdit_y->text().toLocal8Bit().toDouble());
+    qDebug() << "result:" << getString(z).data() << xrays.getCoefOfRefl(ui->lineEdit_x->text().toLocal8Bit().toDouble(), ui->lineEdit_y->text().toLocal8Bit().toDouble());
 
 //    qDebug() << getQString(_pow(x, y, error));
+    qDebug() << "###";
+}
 
+void MainWindow::startSpread()
+{
+    Project proj(ui->spinBox_idProjs->value(), this);
+    proj.startModelling();
+}
+
+void MainWindow::on_pushButton_3_clicked()
+{
+    REAL a("1.1", NUMBITS);
+    REAL b("2.3", NUMBITS);
+    REAL c("3.5", NUMBITS);
+
+    REAL * array[] = {&a, &b, &c};
+
+    qDebug() << QString::fromStdString(getString(*array[1])) << QString::fromStdString(getString(*array[2]));
 }

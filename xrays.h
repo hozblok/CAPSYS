@@ -21,8 +21,8 @@ private:
 public:
     explicit XRays(QObject *parent = 0, QString connectionName = "connection");
 
-    int send_ray(QVector<int> &cap_id,
-                 QVector<int> &source_id,
+    int send_ray(VEC_I &cap_id,
+                 VEC_I &source_id,
                  bool recording_not_captured = true, //хорошо работает
                  int number_of_attempts = 300,
                  bool paranoid_check = false); //не оттестировано
