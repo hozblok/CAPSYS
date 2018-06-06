@@ -1,0 +1,25 @@
+# Hashes of file build rules.
+9fbb3f83e3a459ae169b67d227506be3 CMakeFiles/mgl_translations
+9d64b271cd51cb112fc18372312379e1 examples/CMakeFiles/mgl_qgl_example_automoc
+def15b85761d5980199242c464f0607d fonts/CMakeFiles/fonts
+1e863abfb06b69c3d97db95beace7426 fonts/STIX.vfmb
+64165cb705832675be4ca3c493152bb5 fonts/adventor.vfmb
+9e2c14c70bdd0aa7418a6bcb0d990b19 fonts/bonum.vfmb
+1a7f49be0b0bb5df00c93ba1408fd601 fonts/cursor.vfmb
+07d67269de2103fa00963e62ec21b4f1 fonts/heros.vfmb
+26943b49274bc12f50fc8f76bc7c63cc fonts/heroscn.vfmb
+7da670784cca0de5dc3daa8a32792d66 fonts/pagella.vfmb
+0883b17e29bd7f91566269aa5452b4c6 fonts/schola.vfmb
+d57b9b169cfa2097fc2839d55db11599 fonts/termes.vfmb
+8572751104a61d3723a1e657b26680d7 json/CMakeFiles/MglForJsTestBench_automoc
+13f0b3e19ffb7a430ebed1c62333492c mathgl.pot
+fdc6958bd68f29f177052bc2048f4d43 mathgl_es.mo
+752c9d33e67994cae14ebe4c62786f93 mathgl_es.po.done
+0217f99f04e714f7801821d08b94045a mathgl_ru.mo
+12c5ac5f954f46368bbdbf221466917d mathgl_ru.po.done
+1d2518b26fa2763d84ac7ce52eccea73 udav/CMakeFiles/udav_automoc
+8574df5835549e2ddb7c7f4d1b87a27e udav/qrc_udav.cpp
+9c7306155f6a62cc8b94a9528b749e15 widgets/qt5/CMakeFiles/mgl-qt-static_automoc
+3849486e31fd522e22da05bb40e40f88 widgets/qt5/CMakeFiles/mgl-qt5-static_automoc
+d20419cb3b1def87fc39cdcbb94b882b widgets/qt5/CMakeFiles/mgl-qt5_automoc
+e79e46cca25883c76506fcdadc5e9bc9 widgets/qt5/CMakeFiles/mgl-qt_automoc

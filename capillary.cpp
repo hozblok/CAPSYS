@@ -63,12 +63,12 @@ Surface *Capillary::getUpperEdge() const
     return upperEdge;
 }
 
-const REAL *Capillary::getAccuracy() const
+const float100et *Capillary::getAccuracy() const
 {
     return &accuracy;
 }
 
-const REAL *Capillary::getAccuracyPhysics() const
+const float100et *Capillary::getAccuracyPhysics() const
 {
     return &accuracyPhysics;
 }

@@ -1,0 +1,1 @@
+/usr/bin/c++    -fopenmp -O3 -DNDEBUG   CMakeFiles/mglconv.dir/mglconv.cpp.o  -o mglconv -Wl,-rpath,/home/don_vanchos/CAPSYS/libs/MathGL/mathgl-2.4.1-linux-build/src: -rdynamic ../src/libmgl.so.7.5.0 -lGLU -lGL -lgif -lpng -lz -ljpeg -lm 

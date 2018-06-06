@@ -14,8 +14,8 @@ class Capillary
     Surface *surface;
     Surface *lowerEdge;
     Surface *upperEdge;
-    REAL accuracy;
-    REAL accuracyPhysics;
+    float100et accuracy;
+    float100et accuracyPhysics;
     QByteArray comment;
 
 public:
@@ -24,8 +24,8 @@ public:
     Surface *getSurface() const;
     Surface *getLowerEdge() const;
     Surface *getUpperEdge() const;
-    const REAL *getAccuracy() const;
-    const REAL *getAccuracyPhysics() const;
+    const float100et *getAccuracy() const;
+    const float100et *getAccuracyPhysics() const;
 };
 
 #endif // CAPILLARY_H
